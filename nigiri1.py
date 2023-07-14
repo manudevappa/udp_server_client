@@ -16,7 +16,13 @@ import urwid
 from urwid import MetaSignals
 from datetime import datetime
 
+from multiprocessing import Process
+
 import socket
+
+# Server information
+server_ip = '192.168.0.136'  # Replace with the server IP address
+server_port = 12345  # Replace with the server port number
 
 
 class ExtendedListBox(urwid.ListBox):
@@ -99,6 +105,7 @@ FOOTER = Input line (Ext. Edit)
 """
 
 
+
 class MainWindow(object):
 
     __metaclass__ = MetaSignals
@@ -151,13 +158,6 @@ class MainWindow(object):
 
             Start mainloop.
         """
-        try:
-            response, server_address = client_socket.recvfrom(1024)
-        except socket.error:
-            pass
-        else: 
-            #print("Received response: ", response.decode())
-            self.print_received_message(response);
 
         # I don't know what the callbacks are for yet,
         # it's a code taken from the nigiri project
@@ -191,7 +191,7 @@ class MainWindow(object):
 
         invalidate.locked = False
         urwid.canvas.CanvasCache.invalidate = classmethod(invalidate)
-
+        
         try:
             self.main_loop.run()
         except KeyboardInterrupt:
@@ -283,7 +283,6 @@ class MainWindow(object):
         else:
             self.context.keypress (size, key)
 
- 
     def print_sent_message(self, text):
         """
             Print a received message
@@ -297,19 +296,27 @@ class MainWindow(object):
         time_text.set_align_mode('right')
         self.print_text(time_text)
 
- 
+    def print_data(self, text):
+        self.print_sent_message(text)
+
     def print_received_message(self, text):
         """
             Print a sent message
         """
+        """
+        current_time = datetime.now().strftime(" : %I:%M:%S %p")
+        time_text =  current_time + text;
+        time_text = urwid.Text(time_text)
+        time_text.set_align_mode('left')
+        self.print_text(time_text)
+        """
+        current_time = datetime.now().strftime(" : %I:%M:%S %p")
+        client_socket.sendto(text.encode(), (server_ip, server_port))
+        time_text =  text + current_time;
 
-        header = urwid.Text('[%s] System:' % self.get_time())
-        header.set_align_mode('right')
-        self.print_text(header)
-        text = urwid.Text(text)
-        text.set_align_mode('right')
-        self.print_text(text)
-
+        time_text = urwid.Text(time_text)
+        time_text.set_align_mode('right')
+        self.print_text(time_text)
         
     def print_text(self, text):
         """
@@ -321,7 +328,7 @@ class MainWindow(object):
         walker = self.generic_output_walker
 
         if not isinstance(text, urwid.Text):
-            text = urwid.Text(text.rstrip('\n'))  # Strip trailing newlines
+            text = urwid.Text(text)
 
         walker.append(text)
 
@@ -385,21 +392,31 @@ def setup_logging():
         print >> sys.stderr, "Logging init error: %s" % (e)
 
 
+def receiveSocket():
+    while True:
+        response, server_address = client_socket.recvfrom(1024)
+        #print("Received response: ", response.decode())
+        #text = self.footer.get_edit_text()
+        main_window.print_data(response.decode())
+
 if __name__ == "__main__":
     
-    # Server information
-    server_ip = '192.168.238.221'  # Replace with the server IP address
-    server_port = 12345  # Replace with the server port number
-
     # Create a UDP socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    client_socket.setblocking(0)
+    #client_socket.setblocking(0)
 
     setup_logging()
 
-    main_window = MainWindow()
+    main_window = MainWindow()  
 
+    p2 = Process(target=receiveSocket)
+    p2.start()
+    #p2.join()
+  
     sys.excepthook = except_hook
+    p1 = Process(target=main_window.main())
+    p1.start()
+    #p1.join()
 
-    main_window.main()
+    #main_window.main()
