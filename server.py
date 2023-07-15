@@ -38,4 +38,4 @@ while True:
             if address != client_address:
                 relay_message = f"{username}: {message}"
                 server_socket.sendto(relay_message.encode(), address)
-                print(f"Relaying message from '{username}' to other clients.")
+                print(f"Relaying message from '{client_address}' to other clients.")

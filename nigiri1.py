@@ -138,8 +138,8 @@ class MainWindow(object):
     def __init__(self, sender="1234567890"):
         self.shall_quit = False
         self.sender = sender
-        self.generic_output_walker = []  # Define the generic_output_walker attribute as an empty list
-        self.body = None  # Initialize the body attribute as None
+        #self.generic_output_walker = []  # Define the generic_output_walker attribute as an empty list
+        #self.body = None  # Initialize the body attribute as None
 
     def main(self):
         """ 
@@ -305,12 +305,13 @@ class MainWindow(object):
         """
             Print a sent message
         """
-        
-        current_time = datetime.now().strftime(" : %I:%M:%S %p")
+            
+        current_time = datetime.now().strftime("%I:%M:%S %p : ")
         time_text =  current_time + text;
         time_text = urwid.Text(time_text)
         time_text.set_align_mode('left')
         self.print_text(time_text)
+        self.main_loop.draw_screen()
         """
         current_time = datetime.now().strftime(" : %I:%M:%S %p")
         
@@ -397,7 +398,7 @@ def setup_logging():
 def receiveSocket():
     while True:
         response, server_address = client_socket.recvfrom(1024)
-        print("Received response: ", response.decode())
+        #print("Received response: ", response.decode())
         #text = self.footer.get_edit_text()
         #text = "hello world"
         main_window.print_received_message(response.decode())
@@ -406,9 +407,7 @@ if __name__ == "__main__":
     
     # Create a UDP socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    print("something");    
-    #client_socket.setblocking(0)
-
+    
     setup_logging()
     main_window = MainWindow()  
 
