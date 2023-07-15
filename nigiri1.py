@@ -11,19 +11,21 @@ import traceback
 import re
 import logging
 import locale
-
+import ipaddress
 import urwid
 from urwid import MetaSignals
 from datetime import datetime
-
 import threading
-
 import socket
 
-# Server information
-server_ip = '192.168.0.136'  # Replace with the server IP address
-server_port = 12345  # Replace with the server port number
+IP_Found = False
 
+#debug 
+DEBUG_ENABLE = True
+# Server information
+server_ip = ''  # Replace with the server IP address
+server_port = 12345  # Replace with the server port number
+join_request_send = False
 
 class ExtendedListBox(urwid.ListBox):
     """
@@ -138,6 +140,7 @@ class MainWindow(object):
     def __init__(self, sender="1234567890"):
         self.shall_quit = False
         self.sender = sender
+        self.IP_Found = False
         #self.generic_output_walker = []  # Define the generic_output_walker attribute as an empty list
         #self.body = None  # Initialize the body attribute as None
 
@@ -194,7 +197,7 @@ class MainWindow(object):
         urwid.canvas.CanvasCache.invalidate = classmethod(invalidate)
         
         try:
-            p2.start()  
+            socketThread.start()
             self.main_loop.run()
         except KeyboardInterrupt:
             self.quit()
@@ -275,13 +278,37 @@ class MainWindow(object):
             self.footer.set_edit_text(" "*len(text))
             self.footer.set_edit_text("")
 
-            if text in ('quit', 'q'):
+            if text in ('/quit', '/q'):
                 self.quit()
 
-            if text.strip():
-                self.print_sent_message(text)
-                #self.print_received_message('Answer')
+            if "/ip" in text:   
+                input = text.split(' ')
+                size = len(input)
+                if size == 1:
+                    if DEBUG_ENABLE:
+                        self.print_sent_message("IP Missing!")
+                else:
+                    try:
+                        server_ip = ipaddress.ip_address(input[1])
+                        temp_text = "Server IP Updated " + input[1]
+                        self.print_text(temp_text)
+                        # Create a UDP socket
+                        self.IP_Found = True
 
+                    except ValueError:
+                        # If the input is not a valid IP address, catch the exception and print an error message    
+                        self.print_text("Invalid IP address")
+                        size = len(text)
+            elif "/join" in text:
+                join_request_send = True
+                self.print_sent_message(text)
+            elif text.strip():
+                if self.IP_Found == True:
+                    self.print_sent_message(text)
+                else:
+                    self.print_text("Enter UDP Server IP : \"/ip <server_ip_address>\"")
+
+                
         else:
             self.context.keypress (size, key)
 
@@ -291,12 +318,17 @@ class MainWindow(object):
         """
         # Send the message to the server
         current_time = datetime.now().strftime(" : %I:%M:%S %p")
+        
+        # if IP_Found == True:
+        
+        server_ip = '192.168.0.136'
         client_socket.sendto(text.encode(), (server_ip, server_port))
         time_text =  text + current_time;
-
         time_text = urwid.Text(time_text)
         time_text.set_align_mode('right')
         self.print_text(time_text)
+        # else:
+            # self.print_text("Enter Server IP, /IP <ip_address>")
 
     def print_data(self, text):
         self.print_received_message(text)
@@ -398,10 +430,13 @@ def setup_logging():
 def receiveSocket():
     while True:
         response, server_address = client_socket.recvfrom(1024)
-        #print("Received response: ", response.decode())
-        #text = self.footer.get_edit_text()
-        #text = "hello world"
-        main_window.print_received_message(response.decode())
+        # print("Received response: ", response.decode())
+        # text = self.footer.get_edit_text()
+        text = response.decode()
+        if "jAcptD" in text:
+            main_window.print_received_message("Joined Group")    
+        else:
+            main_window.print_received_message(response.decode())
 
 if __name__ == "__main__":
     
@@ -411,7 +446,7 @@ if __name__ == "__main__":
     setup_logging()
     main_window = MainWindow()  
 
-    p2 = threading.Thread(target=receiveSocket)
+    socketThread     = threading.Thread(target=receiveSocket)
 
     main_window.main()
     
