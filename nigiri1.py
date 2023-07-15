@@ -138,7 +138,8 @@ class MainWindow(object):
     def __init__(self, sender="1234567890"):
         self.shall_quit = False
         self.sender = sender
-
+        self.generic_output_walker = []  # Define the generic_output_walker attribute as an empty list
+        self.body = None  # Initialize the body attribute as None
 
     def main(self):
         """ 
@@ -297,7 +298,7 @@ class MainWindow(object):
         self.print_text(time_text)
 
     def print_data(self, text):
-        self.print_sent_message(text)
+        self.print_received_message(text)
 
     def print_received_message(self, text):
         """
@@ -410,13 +411,16 @@ if __name__ == "__main__":
 
     main_window = MainWindow()  
 
+    main_window.main()
+    
     p2 = Process(target=receiveSocket)
     p2.start()
     #p2.join()
-  
+    """
+    
     sys.excepthook = except_hook
     p1 = Process(target=main_window.main())
     p1.start()
     #p1.join()
-
+    """
     #main_window.main()
