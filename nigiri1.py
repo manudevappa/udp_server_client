@@ -16,7 +16,7 @@ import urwid
 from urwid import MetaSignals
 from datetime import datetime
 
-from multiprocessing import Process
+import threading
 
 import socket
 
@@ -194,6 +194,7 @@ class MainWindow(object):
         urwid.canvas.CanvasCache.invalidate = classmethod(invalidate)
         
         try:
+            p2.start()  
             self.main_loop.run()
         except KeyboardInterrupt:
             self.quit()
@@ -304,7 +305,7 @@ class MainWindow(object):
         """
             Print a sent message
         """
-        """
+        
         current_time = datetime.now().strftime(" : %I:%M:%S %p")
         time_text =  current_time + text;
         time_text = urwid.Text(time_text)
@@ -312,13 +313,13 @@ class MainWindow(object):
         self.print_text(time_text)
         """
         current_time = datetime.now().strftime(" : %I:%M:%S %p")
-        client_socket.sendto(text.encode(), (server_ip, server_port))
+        
         time_text =  text + current_time;
 
         time_text = urwid.Text(time_text)
-        time_text.set_align_mode('right')
+        time_text.set_align_mode('left')
         self.print_text(time_text)
-        
+        """
     def print_text(self, text):
         """
             Print the given text in the _current_ window
@@ -378,7 +379,7 @@ def setup_logging():
                 if record.exc_info:
                     except_hook(*record.exc_info)
 
-        logfile = '/tmp/chat.log'
+        logfile = '/home/boss/protocol_learn/udp/curses/log.log'
         logdir = os.path.dirname(logfile)
 
         if not os.path.exists(logdir):
@@ -396,28 +397,28 @@ def setup_logging():
 def receiveSocket():
     while True:
         response, server_address = client_socket.recvfrom(1024)
-        #print("Received response: ", response.decode())
+        print("Received response: ", response.decode())
         #text = self.footer.get_edit_text()
-        main_window.print_data(response.decode())
+        #text = "hello world"
+        main_window.print_received_message(response.decode())
 
 if __name__ == "__main__":
     
     # Create a UDP socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+    print("something");    
     #client_socket.setblocking(0)
 
     setup_logging()
-
     main_window = MainWindow()  
+
+    p2 = threading.Thread(target=receiveSocket)
 
     main_window.main()
     
-    p2 = Process(target=receiveSocket)
-    p2.start()
     #p2.join()
     """
-    
+
     sys.excepthook = except_hook
     p1 = Process(target=main_window.main())
     p1.start()
