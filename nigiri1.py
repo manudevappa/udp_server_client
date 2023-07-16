@@ -419,7 +419,7 @@ def setup_logging():
                 if record.exc_info:
                     except_hook(*record.exc_info)
 
-        logfile = '/home/boss/protocol_learn/udp/curses/log.log'
+        logfile = '/tmp/log.log'
         logdir = os.path.dirname(logfile)
 
         if not os.path.exists(logdir):
