@@ -10,6 +10,8 @@ rows = 100
 cols = 100
 client_list = [[0] * cols for _ in range(rows)]
 
+# Temporary username
+temp_username = None
 # Create a UDP socket
 get_ip = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -69,32 +71,43 @@ def json_encode(towhome, message_type, uname, message):
 # Initialize an empty list
 client_list = []
 
-#  Prepare socket and send
 
-def group_send(client_address, message_type, message):
+def ack_send(client_address, message_type, message, u_name):
 	for client in client_list:
 		print("search", client.ip_address)
 		if client.ip_address != client_address[0]:
 			if client.connection_status == True:
-				encoded_data = json_encode("group", message_type, client.name, message)
+				encoded_data = json_encode("group", message_type, u_name, message)
+				print("group send ", encoded_data)
+				client_addr = client.ip_address, client.port
+				server_socket.sendto(encoded_data.encode(), client_addr)
+
+#  Prepare socket and send group message
+def group_send(client_address, message_type, message, u_name):
+	for client in client_list:
+		print("search", client.ip_address)
+		if client.ip_address != client_address[0]:
+			if client.connection_status == True:
+				encoded_data = json_encode("group", message_type, u_name, message)
+				# print("group send ", encoded_data)
 				client_addr = client.ip_address, client.port
 				server_socket.sendto(encoded_data.encode(), client_addr)
 
 
-def send_socket(client_address, message, event):
+def send_socket(client_address, message, event, u_name):
 	match event:
 		case "join":
-			encoded_data = json_encode("self", "join_ack", " ", message)
+			encoded_data = json_encode("self", "join_ack", None, message)
 			server_socket.sendto(encoded_data.encode(), client_address)
-			group_send(client_address, "new_joinee", None)
+			ack_send(client_address, "new_joinee", None, u_name)
 
 		case "quit":
-			encoded_data = json_encode("self", "quit_ack", " ", " ")
+			encoded_data = json_encode("self", "quit_ack", None, " ")
 			server_socket.sendto(encoded_data.encode(), client_address)
-			group_send(client_address, "someone_left", None)
+			ack_send(client_address, "someone_left", None, u_name)
 		   
-		case "group":
-			group_send(client_address, "group", message)
+		case "group_chat":
+			group_send(client_address, "group", message, u_name)
 
 
 while True:
@@ -113,7 +126,7 @@ while True:
 			get_satus 		= True
 			add_device(get_ip_address, get_port, get_username, get_satus)
 			# Send req accept message to client
-			send_socket(client_address, "", "join")
+			send_socket(client_address, "", "join", json_data['u_name'])
 
 		case "quit":
 			for client in client_list:
@@ -121,6 +134,6 @@ while True:
 					send_socket(client_address, "", "quit")
 					client.update_connection_status(False)
 					break
-		case "group_chat":
-			send_socket(client_address, json_data['message'], "group_chat")
+		case "group":
+			send_socket(client_address, json_data['message'], "group_chat", json_data['u_name'])
 		

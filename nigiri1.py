@@ -27,6 +27,7 @@ DEBUG_ENABLE = True
 server_ip = ''  # Replace with the server IP address
 server_port = 12345  # Replace with the server port number
 join_request_send = False
+ClientUserName = None
 
 class ExtendedListBox(urwid.ListBox):
     """
@@ -142,6 +143,7 @@ class MainWindow(object):
         self.shall_quit = False
         self.sender = sender
         self.IP_Found = False
+        self.ClientUserName = "PC User"
         #self.generic_output_walker = []  # Define the generic_output_walker attribute as an empty list
         #self.body = None  # Initialize the body attribute as None
 
@@ -280,7 +282,7 @@ class MainWindow(object):
             self.footer.set_edit_text("")
 
             if text in ('/quit', '/q'):
-                data_to_send  = self.json_encode(None, "quit", None, None)
+                data_to_send  = self.json_encode(None, "quit", self.ClientUserName, None)
                 self.send_socket(data_to_send)
                 time.sleep(5)
                 self.quit()
@@ -306,12 +308,13 @@ class MainWindow(object):
 
             elif "/join" in text:
                 join_request_send = True
-                data_to_send  = self.json_encode(None, "join", text[6:], None)
+                self.ClientUserName = text[6:]
+                data_to_send  = self.json_encode(None, "join", self.ClientUserName, None)
                 self.send_socket(data_to_send)
             elif text.strip():
                 if self.IP_Found == True:
                     self.print_sent_message(text, "right")
-                    encoded_data  = self.json_encode(None, "group", None, text)
+                    encoded_data  = self.json_encode(None, "group", self.ClientUserName, text)
                     self.send_socket(encoded_data)
                 else:
                     self.print_text("Enter UDP Server IP : \"/ip <server_ip_address>\"")
@@ -449,15 +452,15 @@ def receiveSocket():
                     main_window.print_received_message("Error <I_unknow_type>", "center")
             case "group":
                 if formatted_json['type'] == "new_joinee":
-                    temp_text = formatted_json['uname'] + " Joined Channel"
+                    temp_text = formatted_json['u_name'] + " Joined Channel"
                     main_window.print_received_message(temp_text, "center")
 
                 elif formatted_json['type'] == "someone_left":
-                    temp_text = formatted_json['uname'] + " Left Channel"
+                    temp_text = formatted_json['u_name'] + " Left Channel"
                     main_window.print_received_message(temp_text, "center")                    
 
                 elif formatted_json['type'] == "group":
-                    temp_text = formatted_json['uname'] + formatted_json['message']
+                    temp_text = formatted_json['u_name'] + formatted_json['message']
                     main_window.print_received_message(temp_text, "left")
                 else:
                     main_window.print_received_message("Error <G_unknow_type>", "center")
