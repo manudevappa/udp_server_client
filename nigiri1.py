@@ -435,7 +435,7 @@ def receiveSocket():
         text = response.decode()
         if "jAcptD" in text:
             main_window.print_received_message("Joined Group")    
-        elif "uLTchat" n text:
+        elif "uLTchat" in text:
             main_window.print_received_message("You left the Chat")    
         else:
             main_window.print_received_message(response.decode())
