@@ -1,4 +1,5 @@
 import socket
+import json
 
 # Server information
 server_ip = ''  # Replace with the server IP address
@@ -41,11 +42,6 @@ class Device:
     def update_connection_status(self, update_port):
 	    self.connection_status = update_port
 
-	
-
-# Initialize an empty list
-client_list = []
-
 # Function to add a new device
 def add_device(ip_address, port, name, connection_status):
 	# Check if the IP is already connected
@@ -54,52 +50,77 @@ def add_device(ip_address, port, name, connection_status):
     		client.update_existing_ip(port, name, connection_status)
     		return()
     new_device = Device(ip_address, port, name, connection_status)
-    client_list.append(new_device)
+    client_list.append(new_device)	
+
+# Encode JSON 
+def json_encode(towhome, message_type, uname, message):
+	# Create a dictionary
+	data = {
+		'to_whom' 	: towhome,
+	    'type'		: message_type,
+	    'u_name' 	: uname,
+	    'message' 	: message
+	}
+    # Convert the dictionary to a JSON string	
+	json_data = json.dumps(data)
+	# Return the JSON object
+	return json_data
+
+# Initialize an empty list
+client_list = []
+
+#  Prepare socket and send
+
+def group_send(client_address, message_type, message):
+	for client in client_list:
+		print("search", client.ip_address)
+		if client.ip_address != client_address[0]:
+			if client.connection_status == True:
+				encoded_data = json_encode("group", message_type, client.name, message)
+				client_addr = client.ip_address, client.port
+				server_socket.sendto(encoded_data.encode(), client_addr)
+
 
 def send_socket(client_address, message, event):
 	match event:
-
 		case "join":
-			message = "jAcptD"
-			server_socket.sendto(message.encode(), client_address)
-			send_socket(client_address, "Left the Chat")
+			encoded_data = json_encode("self", "join_ack", " ", message)
+			server_socket.sendto(encoded_data.encode(), client_address)
+			group_send(client_address, "new_joinee", " ")
 
-		case "GroupChat":
-			# Check if the IP is already connected
-		    for client in client_list:
-		    	print("search", client.ip_address)
-		    	if client.ip_address != client_address[0]:
-		    		if client.connection_status == True:
-			    		print("sennd to",client.name, client.ip_address)
-			    		client_addr = client.ip_address, client.port
-			    		message = client.name + " -> " + message
-			    		server_socket.sendto(message.encode(), client_addr)
-	    case "quit":
-			server_socket.sendto(message.encode(), client_address)	    	
+		case "quit":
+			encoded_data = json_encode("self", "quit_ack", " ", " ")
+			server_socket.sendto(encoded_data.encode(), client_address)
+			group_send(client_address, " ", "someone_left")
+		   
+		case "group_chat":
+			group_send(client_address, "group_chat", message)
 
 
 while True:
-    # Receive a message from a client
-    message, client_address = server_socket.recvfrom(1024)
-    message = message.decode()
-    print(message, client_address)
-    if message.startswith("/join "):
-        # Add the client to the client_addresses dictionary
-        get_username 	= message[6:]
-        get_ip_address	= client_address[0] 
-        get_port		= client_address[1]
-        get_satus 		= True
-        add_device(get_ip_address, get_port, get_username, get_satus)
-        # Send req accept message to client
-        send_socket(client_address, "", "join")
+	# Receive a message from a client
+	byte_message, client_address = server_socket.recvfrom(1024)
+	message = byte_message.decode()
+	print("From ",client_address[0], message)
+	json_data = json.loads(message)
+	message_type = json_data["type"] 
+	match message_type:
+		case "join":
+			# Add the client to the client_addresses dictionary
+			get_ip_address	= client_address[0] 
+			get_port		= client_address[1]
+			get_username	= json_data['u_name']
+			get_satus 		= True
+			add_device(get_ip_address, get_port, get_username, get_satus)
+			# Send req accept message to client
+			send_socket(client_address, "", "join")
 
-    elif message.startswith("/quit"):
-        # Check if the IP is already connected
-	    for client in client_list:
-	    	if client.ip_address == client_address[0]:
-	    		send_socket(client_address, "uLTchat")
-	    		client.update_connection_status(False)
-
-	    		break
-    else:
-        send_socket_Group(client_address[0], message)
+		case "quit":
+			for client in client_list:
+				if client.ip_address == client_address[0]:
+					send_socket(client_address, "", "quit")
+					client.update_connection_status(False)
+					break
+		case "group_chat":
+			send_socket(client_address, json_data['message'], "group_chat")
+		

@@ -18,7 +18,7 @@ from datetime import datetime
 import threading
 import socket
 import time
-
+import json
 IP_Found = False
 
 #debug 
@@ -280,7 +280,8 @@ class MainWindow(object):
             self.footer.set_edit_text("")
 
             if text in ('/quit', '/q'):
-                self.print_sent_message("/quit in 5 seconds")
+                data_to_send  = self.json_encode(None, "quit", None, None)
+                self.send_socket(data_to_send)
                 time.sleep(5)
                 self.quit()
 
@@ -289,7 +290,7 @@ class MainWindow(object):
                 size = len(input)
                 if size == 1:
                     if DEBUG_ENABLE:
-                        self.print_sent_message("IP Missing!")
+                        self.print_sent_message("IP Missing!", "right")
                 else:
                     try:
                         server_ip = ipaddress.ip_address(input[1])
@@ -302,12 +303,16 @@ class MainWindow(object):
                         # If the input is not a valid IP address, catch the exception and print an error message    
                         self.print_text("Invalid IP address")
                         size = len(text)
+
             elif "/join" in text:
                 join_request_send = True
-                self.print_sent_message(text)
+                data_to_send  = self.json_encode(None, "join", text[6:], None)
+                self.send_socket(data_to_send)
             elif text.strip():
                 if self.IP_Found == True:
-                    self.print_sent_message(text)
+                    self.print_sent_message(text, "right")
+                    encoded_data  = self.json_encode(None, "group_chat", None, text)
+                    self.send_socket(encoded_data)
                 else:
                     self.print_text("Enter UDP Server IP : \"/ip <server_ip_address>\"")
 
@@ -315,47 +320,30 @@ class MainWindow(object):
         else:
             self.context.keypress (size, key)
 
-    def print_sent_message(self, text):
+    def print_sent_message(self, text, print_where):
         """
-            Print a received message
+            Print a sent message
         """
         # Send the message to the server
         current_time = datetime.now().strftime(" : %I:%M:%S %p")
         
-        # if IP_Found == True:
-        
-        server_ip = '192.168.0.136'
-        client_socket.sendto(text.encode(), (server_ip, server_port))
         time_text =  text + current_time;
         time_text = urwid.Text(time_text)
-        time_text.set_align_mode('center')
+        time_text.set_align_mode(print_where)
         self.print_text(time_text)
-        # else:
-            # self.print_text("Enter Server IP, /IP <ip_address>")
-
-    def print_data(self, text):
-        self.print_received_message(text)
-
-    def print_received_message(self, text):
+        
+    def print_received_message(self, text, where):
         """
-            Print a sent message
+            Print a Received message
         """
             
         current_time = datetime.now().strftime("%I:%M:%S %p : ")
         time_text =  current_time + text;
         time_text = urwid.Text(time_text)
-        time_text.set_align_mode('left')
+        time_text.set_align_mode(where)
         self.print_text(time_text)
         self.main_loop.draw_screen()
-        """
-        current_time = datetime.now().strftime(" : %I:%M:%S %p")
-        
-        time_text =  text + current_time;
 
-        time_text = urwid.Text(time_text)
-        time_text.set_align_mode('left')
-        self.print_text(time_text)
-        """
     def print_text(self, text):
         """
             Print the given text in the _current_ window
@@ -378,7 +366,23 @@ class MainWindow(object):
             Return formated current datetime
         """
         return datetime.datetime.now().strftime('%H:%M:%S')
-        
+
+    def json_encode(self, towhome, message_type, uname, message):
+        # Create a dictionary
+        data = {
+            'to_whom'   : towhome,
+            'type'      : message_type,
+            'u_name'    : uname,
+            'message'   : message
+        }
+        # Convert the dictionary to a JSON string   
+        json_data = json.dumps(data)
+        # Return the JSON object
+        return json_data
+
+    def send_socket(self, socket_data):
+        server_ip = '192.168.0.136'
+        client_socket.sendto(socket_data.encode(), (server_ip, server_port))
 
 def except_hook(extype, exobj, extb, manual=False):
     if not manual:
@@ -433,15 +437,30 @@ def setup_logging():
 def receiveSocket():
     while True:
         response, server_address = client_socket.recvfrom(1024)
-        # print("Received response: ", response.decode())
-        # text = self.footer.get_edit_text()
-        text = response.decode()
-        if "jAcptD" in text:
-            main_window.print_received_message("Joined Group")    
-        elif "uLTchat" in text:
-            main_window.print_received_message("You left the Chat")    
-        else:
-            main_window.print_received_message(response.decode())
+        raw_json = response.decode()
+        formatted_json = json.loads(raw_json)
+        match formatted_json['to_whom']:
+            case "self":
+                if formatted_json['type'] == "join_ack":
+                    main_window.print_received_message("You Joined Channel", "center")
+                elif formatted_json['type'] == "quit_ack":
+                    main_window.print_received_message("You Left Channel", "center")
+                else:
+                    main_window.print_received_message("Error <I_unknow_type>", "center")
+            case "group_chat":
+                if formatted_json['type'] == "new_joinee":
+                    temp_text = formatted_json['uname'] + " Joined Channel"
+                    main_window.print_received_message(temp_text, "center")
+
+                elif formatted_json['type'] == "someone_left":
+                    temp_text = formatted_json['uname'] + " Left Channel"
+                    main_window.print_received_message(temp_text, "center")                    
+
+                elif formatted_json['type'] == "group_chat":
+                    temp_text = formatted_json['uname'] + formatted_json['message']
+                    main_window.print_received_message(temp_text, "left")
+                else:
+                    main_window.print_received_message("Error <G_unknow_type>", "center")
 
 if __name__ == "__main__":
     
