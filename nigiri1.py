@@ -17,6 +17,7 @@ from urwid import MetaSignals
 from datetime import datetime
 import threading
 import socket
+import time
 
 IP_Found = False
 
@@ -279,6 +280,8 @@ class MainWindow(object):
             self.footer.set_edit_text("")
 
             if text in ('/quit', '/q'):
+                self.print_sent_message("/quit in 5 seconds")
+                time.sleep(5)
                 self.quit()
 
             if "/ip" in text:   
@@ -325,7 +328,7 @@ class MainWindow(object):
         client_socket.sendto(text.encode(), (server_ip, server_port))
         time_text =  text + current_time;
         time_text = urwid.Text(time_text)
-        time_text.set_align_mode('right')
+        time_text.set_align_mode('center')
         self.print_text(time_text)
         # else:
             # self.print_text("Enter Server IP, /IP <ip_address>")
