@@ -86,15 +86,15 @@ def send_socket(client_address, message, event):
 		case "join":
 			encoded_data = json_encode("self", "join_ack", " ", message)
 			server_socket.sendto(encoded_data.encode(), client_address)
-			group_send(client_address, "new_joinee", " ")
+			group_send(client_address, "new_joinee", None)
 
 		case "quit":
 			encoded_data = json_encode("self", "quit_ack", " ", " ")
 			server_socket.sendto(encoded_data.encode(), client_address)
-			group_send(client_address, " ", "someone_left")
+			group_send(client_address, "someone_left", None)
 		   
-		case "group_chat":
-			group_send(client_address, "group_chat", message)
+		case "group":
+			group_send(client_address, "group", message)
 
 
 while True:
