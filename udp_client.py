@@ -331,24 +331,25 @@ class MainWindow(object):
             current_time = datetime.now().strftime("%I:%M:%S %p : ")
             time_text =  current_time + text;
             disp_text = urwid.Text(time_text)
+            disp_text.set_align_mode('left')
 
         elif print_where == "right":
             current_time = datetime.now().strftime(" : %I:%M:%S %p")
             time_text =  text + current_time;
             disp_text = urwid.Text(time_text)
+            disp_text.set_align_mode('right')
 
         elif print_where == "center":
             disp_text = urwid.Text(text)
+            disp_text.set_align_mode('center')
 
         else:
             current_time = datetime.now().strftime("%I:%M:%S %p : ")
             time_text =  current_time + text;
             disp_text = urwid.Text(time_text)
-            print_where = "left"
-
-        disp_text.set_align_mode(print_where)
+            disp_text.set_align_mode('left')
         self.print_text(disp_text)
-
+        self.main_loop.draw_screen()
     def print_text(self, text):
         """
             Print the given text in the _current_ window
