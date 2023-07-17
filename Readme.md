@@ -66,3 +66,6 @@ python3 udp_client.py
 5. Join the chat room.
    Example: `/join manu`
 6. Send messages and have fun.
+
+Sample screen:
+![image](https://github.com/manudevappa/udp_server_client/assets/30531874/b650a570-af08-4db4-84ec-14e2a7b43978)
