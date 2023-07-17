@@ -291,13 +291,13 @@ class MainWindow(object):
                 size = len(input)
                 if size == 1:
                     if DEBUG_ENABLE:
-                        self.print_sent_message("IP Missing!", "right")
+                        self.form_print_message("IP Missing!", "right")
                 else:
                     try:
                         ipaddress.ip_address(input[1])
                         self.server_ip = input[1]
                         temp_text = "Server IP Updated " + input[1]
-                        self.print_text(self.server_ip)
+                        self.print_text(temp_text)
                         # Create a UDP socket
                         self.IP_Found = True
 
@@ -313,7 +313,7 @@ class MainWindow(object):
                 self.send_socket(data_to_send)
             elif text.strip():
                 if self.IP_Found == True:
-                    self.print_sent_message(text, "right")
+                    self.form_print_message(text, "right")
                     encoded_data  = self.json_encode(None, "group", self.ClientUserName, text)
                     self.send_socket(encoded_data)
                 else:
@@ -323,29 +323,31 @@ class MainWindow(object):
         else:
             self.context.keypress (size, key)
 
-    def print_sent_message(self, text, print_where):
+    def form_print_message(self, text, print_where):
         """
             Print message
         """
-        # Send the message to the server
-        current_time = datetime.now().strftime(" : %I:%M:%S %p")
-        
-        time_text =  text + current_time;
-        time_text = urwid.Text(time_text)
-        time_text.set_align_mode(print_where)
-        self.print_text(time_text)
-        
-    def print_received_message(self, text, where):
-        """
-            Print a Received message
-        """
-            
-        current_time = datetime.now().strftime("%I:%M:%S %p : ")
-        time_text =  current_time + text;
-        time_text = urwid.Text(time_text)
-        time_text.set_align_mode(where)
-        self.print_text(time_text)
-        self.main_loop.draw_screen()
+        if print_where == "left":
+            current_time = datetime.now().strftime("%I:%M:%S %p : ")
+            time_text =  current_time + text;
+            disp_text = urwid.Text(time_text)
+
+        elif print_where == "right":
+            current_time = datetime.now().strftime(" : %I:%M:%S %p")
+            time_text =  text + current_time;
+            disp_text = urwid.Text(time_text)
+
+        elif print_where == "center":
+            disp_text = urwid.Text(text)
+
+        else:
+            current_time = datetime.now().strftime("%I:%M:%S %p : ")
+            time_text =  current_time + text;
+            disp_text = urwid.Text(time_text)
+            print_where = "left"
+
+        disp_text.set_align_mode(print_where)
+        self.print_text(disp_text)
 
     def print_text(self, text):
         """
@@ -444,25 +446,25 @@ def receiveSocket():
         match formatted_json['to_whom']:
             case "self":
                 if formatted_json['type'] == "join_ack":
-                    main_window.print_received_message("You Joined Channel", "center")
+                    main_window.form_print_message("You Joined Channel", "center")
                 elif formatted_json['type'] == "quit_ack":
-                    main_window.print_received_message("You Left Channel", "center")
+                    main_window.form_print_message("You Left Channel", "center")
                 else:
-                    main_window.print_received_message("Error <I_unknow_type>", "center")
+                    main_window.form_print_message("Error <I_unknow_type>", "center")
             case "group":
                 if formatted_json['type'] == "new_joinee":
                     temp_text = formatted_json['u_name'] + " Joined Channel"
-                    main_window.print_received_message(temp_text, "center")
+                    main_window.form_print_message(temp_text, "center")
 
                 elif formatted_json['type'] == "someone_left":
                     temp_text = formatted_json['u_name'] + " Left Channel"
-                    main_window.print_received_message(temp_text, "center")                    
+                    main_window.form_print_message(temp_text, "center")                    
 
                 elif formatted_json['type'] == "group":
                     temp_text = formatted_json['u_name'] + " : " + formatted_json['message']
-                    main_window.print_received_message(temp_text, "left")
+                    main_window.form_print_message(temp_text, "left")
                 else:
-                    main_window.print_received_message("Error <G_unknow_type>", "center")
+                    main_window.form_print_message("Error <G_unknow_type>", "center")
 
 if __name__ == "__main__":
     
