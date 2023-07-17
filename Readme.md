@@ -9,7 +9,7 @@ This is a terminal chat app based on urwid, UDP socket, built for fun.
 ### Prerequisites
 
 1. Install Python 3.xx.
-2. Install urwid: `pip install urwid`.
+2. Install urwid: `pip install urwid`
 
 ## How to run?
 
