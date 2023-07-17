@@ -1,50 +1,68 @@
-# UDP Chat APP 
+# UDP Chat App
 
-Note: This code only works in Linux System. You can use Cygwin, WSL if you are using Windows
+Note: This code only works on Linux systems. If you are using Windows, you can use Cygwin or WSL.
 
-### What is this ?
-    urwid based terminal chat app, build for fun. 
+### What is this?
 
-### Preacquisition!
-1. Install Python3.xx
-2. Instal urwid <pip install urwid>
+This is a terminal chat app based on urwid, UDP socket, built for fun.
 
-## How to run ?
-    There are two scripts:
-    1. Server
-    2. Client
+### Prerequisites
 
-### What does server code do ?
-- Maintain connected client list
-- Send/Receive messages from/to client
-- Broadcast Message
-- Add/Remove client from channel
-#### How to setup Server ?
-    python3 server.py
-- Run above command
-- Note down the IP address (give that to clients to connect)
+1. Install Python 3.xx.
+2. Install urwid: `pip install urwid`.
 
+## How to run?
 
-### What does client code do ?
-- Join/Quit chatroom
-- Send/Receive messages in group
+There are two scripts:
 
-#### How to setup Client ?
-    python3 udp_client.py
+1. Server
+2. Client
+
+### What does the server code do?
+
+- Maintains a connected client list.
+- Sends/receives messages to/from clients.
+- Broadcasts messages.
+- Adds/removes clients from the channel.
+
+#### How to set up the server?
+
+Run the following command:
+
+```
+python3 server.py
+```
+
+- Take note of the IP address (provide it to clients for connection).
+
+### What does the client code do?
+
+- Joins/quits the chatroom.
+- Sends/receives messages in the group.
+
+#### How to set up the client?
+
+Run the following command:
+
+```
+python3 udp_client.py
+```
+
 #### Supportive Commands
-| Command | Description |
-| ------ | ------ |
-| /ip <ip_address> | Connect to server. Enter Server IP |
-| /join <user_name> | Enter you name to display in group chat |
-| /q or /quit | Quit or exit a group chat |
 
-### How to start ?
-    1. Make sure all clients connected in a same network
-    2. Start Server first (python3 server.py)
-    3. In Client side, start run code (python3 udp_client.py)
-    4. Provide Server IP address to cient 
-        Ex:    /ip 192.168.0.130
-    5. Join chat room
-        Ex:     /join manu
-    6. Send messages, Have Fun.
+| Command            | Description                                        |
+| ------------------ | -------------------------------------------------- |
+| /ip <ip_address>   | Connect to the server. Enter the server IP address. |
+| /join <user_name>  | Enter your name to display in the group chat.      |
+| /q or /quit        | Quit or exit a group chat.                         |
 
+### How to start?
+
+1. Ensure all clients are connected to the same network.
+2. Start the server first (`python3 server.py`).
+3. On the client side, run the code (`python3 udp_client.py`).
+4. Provide the server's IP address to the client.
+   Example: `/ip 192.168.0.130`
+5. Join the chat room.
+   Example: `/join manu`
+6. Send messages and have fun.
